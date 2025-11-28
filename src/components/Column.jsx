@@ -79,7 +79,7 @@ export default function Column({ title, status }) {
       className="
         bg-white border border-gray-200 rounded-2xl 
         shadow-sm hover:shadow-md transition-all duration-200 
-        p-5 min-h-[300px]
+        p-5 min-h-[200px]
       "
     >
       {/* Header */}
