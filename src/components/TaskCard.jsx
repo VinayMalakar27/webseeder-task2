@@ -11,72 +11,62 @@
 //   return (
 //     <div
 //       className="
-//         group bg-slate-700/50 hover:bg-slate-700 border border-white/10 hover:border-white/20
-//         rounded-xl p-4 backdrop-blur-sm
-//         transition-all duration-300 cursor-pointer
-//         shadow-md hover:shadow-xl hover:-translate-y-0.5
+//         bg-white border border-gray-200 rounded-xl p-4 
+//         shadow-sm hover:shadow-md transition-all duration-200
 //       "
-//       style={{ borderLeftColor: task.color, borderLeftWidth: "4px" }}
 //     >
-//       {/* Title & Color Dot */}
-//       <div className="flex items-start gap-3 mb-2">
-//         <div
-//           className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 shadow-lg"
-//           style={{ backgroundColor: task.color }}
-//         ></div>
-//         <h3 className="font-bold text-white text-sm leading-tight flex-1 group-hover:text-blue-300 transition-colors">
+//       {/* Title + Tag */}
+//       <div className="flex items-start justify-between mb-1">
+//         <h3 className="font-semibold text-gray-800 text-sm">
 //           {task.title}
 //         </h3>
+
+//         {task.color && (
+//           <span
+//             className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+//             style={{
+//               backgroundColor: task.color + "20",
+//               color: task.color,
+//             }}
+//           >
+//             Tag
+//           </span>
+//         )}
 //       </div>
 
 //       {/* Description */}
 //       {task.description && (
-//         <p className="text-xs text-gray-400 mb-4 leading-relaxed line-clamp-2 group-hover:text-gray-300 transition-colors ml-5.5">
+//         <p className="text-xs text-gray-500 mb-3 leading-relaxed">
 //           {task.description}
 //         </p>
 //       )}
 
-//       {/* Action Buttons - Hidden until hover */}
-//       <div className="flex gap-2 flex-wrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+//       {/* Actions */}
+//       <div className="flex gap-2">
 //         {task.status !== "todo" && (
 //           <button
 //             onClick={() => moveTask("todo")}
-//             className="
-//               text-xs px-2.5 py-1 rounded-md font-medium
-//               bg-red-500/20 text-red-300 hover:bg-red-500/30
-//               border border-red-500/30 hover:border-red-500/50
-//               transition-all duration-200 active:scale-95
-//             "
+//             className="text-xs text-gray-500 hover:text-gray-800 transition"
 //           >
-//             📋 To Do
+//             📋
 //           </button>
 //         )}
 
 //         {task.status !== "in-progress" && (
 //           <button
 //             onClick={() => moveTask("in-progress")}
-//             className="
-//               text-xs px-2.5 py-1 rounded-md font-medium
-//               bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30
-//               border border-yellow-500/30 hover:border-yellow-500/50
-//               transition-all duration-200 active:scale-95
-//             "
+//             className="text-xs text-gray-500 hover:text-gray-800 transition"
 //           >
-//             ⚙️ Progress
+//             🔄
 //           </button>
 //         )}
 
 //         {task.status !== "done" && (
 //           <button
 //             onClick={() => moveTask("done")}
-//             className="
-//               text-xs px-2.5 py-1 rounded-md font-medium
-//               bg-green-500/20 text-green-300 hover:bg-green-500/30
-//               border border-green-500/30 hover:border-green-500/50
-//               transition-all duration-200 active:scale-95
-//             "
+//             className="text-xs text-gray-500 hover:text-gray-800 transition"
 //           >
-//             ✅ Done
+//             ✅
 //           </button>
 //         )}
 //       </div>
@@ -84,23 +74,50 @@
 //   );
 // }
 
-
 import { useDispatch } from "react-redux";
-import { updateStatus } from "../features/tasksSlice";
+import { updateStatus, deleteTask } from "../features/tasksSlice";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export default function TaskCard({ task }) {
   const dispatch = useDispatch();
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const moveTask = (newStatus) => {
     dispatch(updateStatus({ id: task.id, status: newStatus }));
   };
 
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      dispatch(deleteTask({ id: task.id }));
+    }
+  };
+
   return (
     <div
-      className="
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`
         bg-white border border-gray-200 rounded-xl p-4 
-        shadow-sm hover:shadow-md transition-all duration-200
-      "
+        shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50 shadow-xl ring-2 ring-blue-400' : ''}
+      `}
     >
       {/* Title + Tag */}
       <div className="flex items-start justify-between mb-1">
@@ -129,11 +146,15 @@ export default function TaskCard({ task }) {
       )}
 
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         {task.status !== "todo" && (
           <button
-            onClick={() => moveTask("todo")}
+            onClick={(e) => {
+              e.stopPropagation();
+              moveTask("todo");
+            }}
             className="text-xs text-gray-500 hover:text-gray-800 transition"
+            title="Move to To Do"
           >
             📋
           </button>
@@ -141,8 +162,12 @@ export default function TaskCard({ task }) {
 
         {task.status !== "in-progress" && (
           <button
-            onClick={() => moveTask("in-progress")}
+            onClick={(e) => {
+              e.stopPropagation();
+              moveTask("in-progress");
+            }}
             className="text-xs text-gray-500 hover:text-gray-800 transition"
+            title="Move to In Progress"
           >
             🔄
           </button>
@@ -150,14 +175,25 @@ export default function TaskCard({ task }) {
 
         {task.status !== "done" && (
           <button
-            onClick={() => moveTask("done")}
+            onClick={(e) => {
+              e.stopPropagation();
+              moveTask("done");
+            }}
             className="text-xs text-gray-500 hover:text-gray-800 transition"
+            title="Move to Done"
           >
             ✅
           </button>
         )}
+
+        <button
+          onClick={handleDelete}
+          className="text-xs text-red-500 hover:text-red-700 transition ml-auto"
+          title="Delete Task"
+        >
+          🗑️
+        </button>
       </div>
     </div>
   );
 }
-
