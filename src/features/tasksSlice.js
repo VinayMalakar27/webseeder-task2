@@ -141,7 +141,7 @@ const tasksSlice = createSlice({
     },
 
     reorderTasks(state, action) {
-      const { sourceStatus, destStatus, sourceIndex, destIndex } = action.payload;
+      const { sourceStatus, destStatus, sourceIndex, destIndex, taskId } = action.payload;
       
       // Get all tasks for source and destination columns
       const sourceTasks = state.tasks
@@ -158,13 +158,9 @@ const tasksSlice = createSlice({
         // Reordering within same column
         if (sourceIndex === destIndex) return;
         
-        // Validate for same-column reorder
-        if (sourceIndex < 0 || sourceIndex >= sourceTasks.length) {
-          console.error("Invalid source index for same column");
-          return;
-        }
-        
         const [movedTask] = sourceTasks.splice(sourceIndex, 1);
+        if (!movedTask) return;
+        
         sourceTasks.splice(destIndex, 0, movedTask);
         
         // Update order for all tasks in this column
@@ -175,33 +171,24 @@ const tasksSlice = createSlice({
           }
         });
       } else {
-        // Moving between columns
-        if (sourceTasks.length === 0) {
-          console.error("No tasks in source column");
-          return;
-        }
+        // Moving between columns - use taskId for reliable lookup
+        let movedTask;
         
-        // For cross-column moves, validate differently
-        if (sourceIndex < 0 || sourceIndex >= sourceTasks.length) {
-          console.error("Invalid source index for cross-column move");
-          return;
+        if (taskId) {
+          // Find by ID (most reliable method)
+          movedTask = state.tasks.find(t => t.id === taskId);
+        } else {
+          // Fallback to index-based lookup
+          movedTask = sourceTasks[sourceIndex];
         }
-        
-        const movedTask = sourceTasks[sourceIndex];
         
         if (!movedTask) {
-          console.error("Task not found at source index");
+          console.error("Task not found");
           return;
         }
         
-        // Find the actual task in state and update its status
-        const taskInState = state.tasks.find(t => t.id === movedTask.id);
-        if (!taskInState) {
-          console.error("Task not found in state");
-          return;
-        }
-        
-        taskInState.status = destStatus;
+        // Update task status
+        movedTask.status = destStatus;
         
         // Rebuild dest tasks with the new task included
         const updatedDestTasks = state.tasks
@@ -213,7 +200,7 @@ const tasksSlice = createSlice({
         if (movedIndex !== -1) {
           updatedDestTasks.splice(movedIndex, 1);
         }
-        updatedDestTasks.splice(destIndex, 0, taskInState);
+        updatedDestTasks.splice(destIndex, 0, movedTask);
         
         // Update order for source column (excluding moved task)
         const updatedSourceTasks = state.tasks

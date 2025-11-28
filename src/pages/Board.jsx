@@ -73,6 +73,7 @@
 //     </div>
 //   );
 // }
+
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { reorderTasks } from "../features/tasksSlice";
@@ -104,28 +105,6 @@ export default function Board() {
     setActiveId(event.active.id);
   };
 
-  const handleDragOver = (event) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeContainer = active.data.current?.sortable?.containerId;
-    const overContainer = over.data.current?.sortable?.containerId || over.id;
-
-    // Only dispatch if moving between different columns
-    if (activeContainer && overContainer && activeContainer !== overContainer) {
-      const activeIndex = active.data.current?.sortable?.index || 0;
-      
-      dispatch(
-        reorderTasks({
-          sourceStatus: activeContainer,
-          destStatus: overContainer,
-          sourceIndex: activeIndex,
-          destIndex: 0,
-        })
-      );
-    }
-  };
-
   const handleDragEnd = (event) => {
     const { active, over } = event;
     setActiveId(null);
@@ -145,14 +124,14 @@ export default function Board() {
           destStatus: overContainer,
           sourceIndex: activeIndex,
           destIndex: overIndex,
+          taskId: active.id, // Pass the task ID for reliable lookup
         })
       );
     }
   };
 
   return (
-    <div className="min-h-screen bg-black/90
- from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-black/90 from-gray-50 to-gray-100">
 
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-20">
@@ -199,7 +178,6 @@ export default function Board() {
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
