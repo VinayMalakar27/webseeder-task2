@@ -55,7 +55,8 @@ export default function Board() {
   };
 
   return (
-    <div className="min-h-screen bg-black/90 from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-white/10
+ from-gray-50 to-gray-100">
 
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-20">
@@ -78,7 +79,9 @@ export default function Board() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in duration-200">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.35)]
+
+ p-6 w-full max-w-md animate-in fade-in duration-200">
             
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-4">
